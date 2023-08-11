@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+
+// adding error handling
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { throwError } from 'rxjs';
+import { retry, catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -12,11 +16,31 @@ export class ApiService {
   // imported and injected the HttpClient service 
   constructor(private HttpClient: HttpClient) { }
 
+  handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Unknown Error!'; // Default error message
+
+    if (error.error instanceof ErrorEvent) {
+      // client-side errors
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // server-side errors
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+
+    window.alert(errorMessage); // Display the error message in an alert window
+    return throwError(errorMessage);  // Throw the error as an observable
+  }
+
+  // Method for sending GET request WITH error handling
+  public sendGetRequest(){
+    return this.HttpClient.get(this.SERVER_URL).pipe(
+      catchError(this.handleError)); // Apply error handling using catchError
+  }
+
+  // Method for sending GET request WITHOUT error handling
   // defining get() method that sends a GET request to the REST API endpoint
   public get() {
-
-    // this invokes the get() method of the HttpClient
-    // to send GET request to the REST API
-    return this.HttpClient.get(this.SERVER_URL);
+    return this.HttpClient.get(this.SERVER_URL); // send GET request to the REST API
   }
+  
 }
